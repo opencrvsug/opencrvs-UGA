@@ -722,42 +722,40 @@ function birthDeclarationWorkflow(
               rejectionComment
             )
           }
+          await fetchRegistration(randomRegistrar, id)
+          if (!declaredRecently || Math.random() > 0.5) {
+            await markAsRegistered(randomRegistrar, id, registrationDetails)
+            const registration = await fetchRegistration(randomRegistrar, id)
+            if (
+              CERTIFY &&
+              (!declaredRecently || Math.random() > 0.5) &&
+              registration
+            ) {
+              log('SHOULD NEVER COME HERE')
+              // Wait for few seconds so registration gets updated to elasticsearch before certifying
+              await wait(2000)
+              log('Certifying', id)
+              await markAsCertified(
+                registration.id,
+                randomRegistrar,
+                createBirthCertificationDetails(
+                  add(new Date(submissionTime), {
+                    days: 1
+                  }),
+                  registration,
+                  config
+                )
+              )
+            } else {
+              log(
+                'Will not register or certify because the declaration was added today'
+              )
+            }
+          }
+
+          log('Birth', submissionDate, ix, '/', Math.round(totalChildBirths))
         }
-
-        // await fetchRegistration(randomRegistrar, id)
       }
-
-      if (!declaredRecently || Math.random() > 0.5) {
-        // await markAsRegistered(randomRegistrar, id, registrationDetails)
-        // const registration = await fetchRegistration(randomRegistrar, id)
-        // if (
-        //   CERTIFY &&
-        //   (!declaredRecently || Math.random() > 0.5) &&
-        //   registration
-        // ) {
-        //   log('SHOULD NEVER COME HERE')
-        //   // Wait for few seconds so registration gets updated to elasticsearch before certifying
-        //   await wait(2000)
-        //   log('Certifying', id)
-        //   await markAsCertified(
-        //     registration.id,
-        //     randomRegistrar,
-        //     createBirthCertificationDetails(
-        //       add(new Date(submissionTime), {
-        //         days: 1
-        //       }),
-        //       registration,
-        //       config
-        //     )
-        //   )
-        // } else {
-        //   log(
-        //     'Will not register or certify because the declaration was added today'
-        //   )
-        // }
-      }
-
-      log('Birth', submissionDate, ix, '/', Math.round(totalChildBirths))
     } catch (error) {
       onError(error)
     }
@@ -828,9 +826,9 @@ function deathDeclarationWorkflow(
         compositionId
       )
 
-      // if (keepDeclarationIncomplete) {
-      //   declaration.deceased = { ...declaration.deceased, gender: sex }
-      // }
+      if (keepDeclarationIncomplete) {
+        declaration.deceased = { ...declaration.deceased, gender: sex }
+      }
 
       if (Math.random() < probabilityToBeRejected) {
         await markEventAsRejected(
