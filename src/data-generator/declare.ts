@@ -335,7 +335,7 @@ export async function createDeathDeclaration(
           timeLoggedMS: timeFilling * 1000
         }
       ],
-      inCompleteFields: !sex ? 'child/child-view-group/gender' : undefined,
+      inCompleteFields: !sex ? 'child/child-view-group/gender' : undefined
     },
     causeOfDeath: 'Natural cause',
     deceased: {
