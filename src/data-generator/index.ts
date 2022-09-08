@@ -79,8 +79,6 @@ const END_YEAR = 2022
 const REGISTER = process.env.REGISTER !== 'false'
 const CERTIFY = process.env.CERTIFY !== 'false'
 
-console.log(REGISTER, CERTIFY)
-
 const BIRTH_OVERALL_REGISTRATIONS_COMPARED_TO_ESTIMATE = 0.8
 const DEATH_OVERALL_REGISTRATIONS_COMPARED_TO_ESTIMATE = 0.4
 
@@ -677,7 +675,6 @@ function birthDeclarationWorkflow(
         }
       } else {
         if (REGISTER && CERTIFY) {
-          log('REACHING ================================================= 0')
           const keepDeclarationIncomplete =
             Math.random() < probabilityToBeIncomplete
           id = await createBirthDeclaration(
@@ -688,9 +685,7 @@ function birthDeclarationWorkflow(
             location,
             randomFacility
           )
-          log('REACHING ================================================= 1')
           const declaration = await fetchRegistration(randomRegistrar, id)
-          log('REACHING ================================================= 2')
           if (keepDeclarationIncomplete) {
             declaration.child = { ...declaration.child, gender: sex }
           }
@@ -731,7 +726,6 @@ function birthDeclarationWorkflow(
               (!declaredRecently || Math.random() > 0.5) &&
               registration
             ) {
-              log('SHOULD NEVER COME HERE')
               // Wait for few seconds so registration gets updated to elasticsearch before certifying
               await wait(2000)
               log('Certifying', id)
