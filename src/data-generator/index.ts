@@ -659,65 +659,71 @@ function birthDeclarationWorkflow(
           submissionTime,
           randomFacility
         )
-        // const declaration = await fetchRegistration(randomRegistrar, id)
-        // try {
-        //   log('IS IT COMING HERE')
-        //   registrationDetails = await createBirthRegistrationDetailsForNotification(
-        //     add(new Date(submissionTime), {
-        //       days: 1
-        //     }),
-        //     location,
-        //     declaration
-        //   )
-        //   log('DECLARATION', declaration.history)
-        // } catch (error) {
-        //   console.log(error)
-        //   console.log(JSON.stringify(declaration))
-        //   throw error
-        // }
+        if (REGISTER && CERTIFY) {
+          const declaration = await fetchRegistration(randomRegistrar, id)
+          try {
+            registrationDetails = await createBirthRegistrationDetailsForNotification(
+              add(new Date(submissionTime), {
+                days: 1
+              }),
+              location,
+              declaration
+            )
+          } catch (error) {
+            console.log(error)
+            console.log(JSON.stringify(declaration))
+            throw error
+          }
+        }
       } else {
-        const keepDeclarationIncomplete =
-          Math.random() < probabilityToBeIncomplete
-        id = await createBirthDeclaration(
-          randomUser,
-          keepDeclarationIncomplete ? undefined : sex,
-          birthDate,
-          submissionTime,
-          location,
-          randomFacility
-        )
-        const declaration = await fetchRegistration(randomRegistrar, id)
-        if (keepDeclarationIncomplete) {
-          declaration.child = { ...declaration.child, gender: sex }
+        if (REGISTER && CERTIFY) {
+          log('REACHING ================================================= 0')
+          const keepDeclarationIncomplete =
+            Math.random() < probabilityToBeIncomplete
+          id = await createBirthDeclaration(
+            randomUser,
+            keepDeclarationIncomplete ? undefined : sex,
+            birthDate,
+            submissionTime,
+            location,
+            randomFacility
+          )
+          log('REACHING ================================================= 1')
+          const declaration = await fetchRegistration(randomRegistrar, id)
+          log('REACHING ================================================= 2')
+          if (keepDeclarationIncomplete) {
+            declaration.child = { ...declaration.child, gender: sex }
+          }
+
+          // try {
+          //   registrationDetails = await createRegistrationDetails(
+          //     add(new Date(submissionTime), {
+          //       days: 1
+          //     }),
+          //     declaration
+          //   )
+          // } catch (error) {
+          //   console.log(error)
+          //   console.log(JSON.stringify(declaration))
+          //   throw error
+          // }
+          log('Registering', id)
+
+          if (!REGISTER) {
+            log('Birth', submissionDate, ix, '/', Math.round(totalChildBirths))
+            return
+          }
+
+          if (Math.random() < probabilityToBeRejected) {
+            await markEventAsRejected(
+              randomRegistrar,
+              id,
+              rejectionReason,
+              rejectionComment
+            )
+          }
         }
 
-        // try {
-        //   registrationDetails = await createRegistrationDetails(
-        //     add(new Date(submissionTime), {
-        //       days: 1
-        //     }),
-        //     declaration
-        //   )
-        // } catch (error) {
-        //   console.log(error)
-        //   console.log(JSON.stringify(declaration))
-        //   throw error
-        // }
-        log('Registering', id)
-      }
-
-      if (!REGISTER) {
-        log('Birth', submissionDate, ix, '/', Math.round(totalChildBirths))
-        return
-      }
-
-      if (Math.random() < probabilityToBeRejected) {
-        await markEventAsRejected(
-          randomRegistrar,
-          id,
-          rejectionReason,
-          rejectionComment
-        )
         // await fetchRegistration(randomRegistrar, id)
       }
 
