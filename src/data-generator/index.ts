@@ -831,7 +831,6 @@ function deathDeclarationWorkflow(
           rejectionReason,
           rejectionComment
         )
-        // Woreking part
         await fetchRegistration(randomRegistrar, compositionId)
       }
 
