@@ -695,18 +695,18 @@ function birthDeclarationWorkflow(
             declaration.child = { ...declaration.child, gender: sex }
           }
 
-          // try {
-          //   registrationDetails = await createRegistrationDetails(
-          //     add(new Date(submissionTime), {
-          //       days: 1
-          //     }),
-          //     declaration
-          //   )
-          // } catch (error) {
-          //   console.log(error)
-          //   console.log(JSON.stringify(declaration))
-          //   throw error
-          // }
+          try {
+            registrationDetails = await createRegistrationDetails(
+              add(new Date(submissionTime), {
+                days: 1
+              }),
+              declaration
+            )
+          } catch (error) {
+            console.log(error)
+            console.log(JSON.stringify(declaration))
+            throw error
+          }
           log('Registering', id)
 
           if (!REGISTER) {
