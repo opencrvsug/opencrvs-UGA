@@ -43,8 +43,8 @@ import { getLocationMetrics } from './statistics'
 import { User, createUsers } from './users'
 import PQueue from 'p-queue'
 import { BirthRegistrationInput } from './gateway'
-import { ConfigResponse, getConfig, getCountryAlpha3 } from './config'
-import { markEventAsRejected } from './reject'
+import { ConfigResponse, getConfig ,getCountryAlpha3} from './config'
+import {markEventAsRejected} from './reject'
 /*
  *
  * Configuration
@@ -62,8 +62,8 @@ export const HOSPITAL_FIELD_AGENTS = 7
 export const REGISTRATION_AGENTS = 2
 export const LOCAL_REGISTRARS = 1
 
-export const PROBABILITY_TO_BE_INCOMPLETE = 0.05
-export const PROBABILITY_TO_BE_REJECTED = 0.02
+export const PROBABILITY_TO_BE_INCOMPLETE = 0.05;
+export const PROBABILITY_TO_BE_REJECTED = 0.02;
 
 const CONCURRENCY = process.env.CONCURRENCY
   ? parseInt(process.env.CONCURRENCY, 10)
@@ -124,7 +124,7 @@ async function main() {
   const token = await getToken(USERNAME, PASSWORD)
   console.log('Got token for system administrator')
   const config = await getConfig(token)
-  const countryAlpha3 = await getCountryAlpha3()
+  const countryAlpha3 = await getCountryAlpha3();
 
   const BIRTH_COMPLETION_DISTRIBUTION = [
     { range: [0, config.config.BIRTH.REGISTRATION_TARGET], weight: 0.8 },
@@ -200,18 +200,12 @@ async function main() {
      */
     log('Creating users for', location.name, '(', location.id, ')')
 
-    const users = await createUsers(
-      token,
-      location,
-      countryAlpha3,
-      config.config.PHONE_NUMBER_PATTERN,
-      {
-        fieldAgents: FIELD_AGENTS,
-        hospitalFieldAgents: HOSPITAL_FIELD_AGENTS,
-        registrationAgents: REGISTRATION_AGENTS,
-        localRegistrars: LOCAL_REGISTRARS
-      }
-    )
+    const users = await createUsers(token, location,countryAlpha3,config.config.PHONE_NUMBER_PATTERN,{
+      fieldAgents: FIELD_AGENTS,
+      hospitalFieldAgents: HOSPITAL_FIELD_AGENTS,
+      registrationAgents: REGISTRATION_AGENTS,
+      localRegistrars: LOCAL_REGISTRARS
+    })
     const allUsers = [
       ...users.fieldAgents,
       ...users.hospitals,
@@ -598,8 +592,8 @@ function birthDeclarationWorkflow(
   totalChildBirths: number,
   completionDays: number,
   config: ConfigResponse,
-  probabilityToBeIncomplete: number,
-  probabilityToBeRejected: number
+  probabilityToBeIncomplete :number,
+  probabilityToBeRejected : number
 ) {
   return async (ix: number) => {
     try {
@@ -657,6 +651,7 @@ function birthDeclarationWorkflow(
           submissionTime,
           randomFacility
         )
+<<<<<<< HEAD
         if (REGISTER && CERTIFY) {
           const declaration = await fetchRegistration(randomRegistrar, id)
           try {
@@ -748,6 +743,89 @@ function birthDeclarationWorkflow(
           }
 
           log('Birth', submissionDate, ix, '/', Math.round(totalChildBirths))
+=======
+        const declaration = await fetchRegistration(randomRegistrar, id)
+        try {
+          registrationDetails = await createBirthRegistrationDetailsForNotification(
+            add(new Date(submissionTime), {
+              days: 1
+            }),
+            location,
+            declaration
+          )
+        } catch (error) {
+          console.log(error)
+          console.log(JSON.stringify(declaration))
+          throw error
+        }
+      } else {
+        const keepDeclarationIncomplete = Math.random() < probabilityToBeIncomplete;
+        id = await createBirthDeclaration(
+          randomUser,
+          keepDeclarationIncomplete ? undefined : sex,
+          birthDate,
+          submissionTime,
+          location,
+          randomFacility
+        )
+        const declaration = await fetchRegistration(randomRegistrar, id)
+        if(keepDeclarationIncomplete){
+          declaration.child = {...declaration.child,gender:sex}
+        }
+        
+        try {
+          registrationDetails = await createRegistrationDetails(
+            add(new Date(submissionTime), {
+              days: 1
+            }),
+            declaration
+          )
+        } catch (error) {
+          console.log(error)
+          console.log(JSON.stringify(declaration))
+          throw error
+        }
+        log('Registering', id)
+      }
+
+      if (!REGISTER) {
+        log('Birth', submissionDate, ix, '/', Math.round(totalChildBirths))
+        return
+      }
+
+      if(Math.random() < probabilityToBeRejected){
+        await markEventAsRejected(randomRegistrar,id,rejectionReason,rejectionComment)
+        await fetchRegistration(randomRegistrar,id)
+      }
+
+      if (!declaredRecently || Math.random() > 0.5) {
+        await markAsRegistered(randomRegistrar, id, registrationDetails)
+        const registration = await fetchRegistration(randomRegistrar, id)
+
+        if (
+          CERTIFY &&
+          (!declaredRecently || Math.random() > 0.5) &&
+          registration
+        ) {
+          // Wait for few seconds so registration gets updated to elasticsearch before certifying
+          await wait(2000)
+          log('Certifying', id)
+          await markAsCertified(
+            registration.id,
+            randomRegistrar,
+            createBirthCertificationDetails(
+              add(new Date(submissionTime), {
+                days: 1
+              }),
+              registration,
+              config
+            )
+          )
+        } else {
+          log(
+            'Will not register or certify because the declaration was added today'
+          )
+>>>>>>> parent of af316082... Not assigning all health system tab to KW
         }
       }
     } catch (error) {
@@ -770,8 +848,8 @@ function deathDeclarationWorkflow(
   healthFacilities: Facility[],
   completionDays: number,
   config: ConfigResponse,
-  probabilityToBeIncomplete: number,
-  probabilityToBeRejected: number
+  probabilityToBeIncomplete :number,
+  probabilityToBeRejected : number
 ) {
   return async (ix: number) => {
     try {
@@ -782,9 +860,8 @@ function deathDeclarationWorkflow(
         seconds: 24 * 60 * 60 * Math.random()
       })
 
-      const sex = Math.random() > 0.4 ? 'male' : 'female'
-      const keepDeclarationIncomplete =
-        Math.random() < probabilityToBeIncomplete
+      const sex = Math.random() > 0.4 ? 'male' : 'female';
+      const keepDeclarationIncomplete = Math.random() < probabilityToBeIncomplete
       const declaredRecently = differenceInDays(today, submissionTime) < 4
 
       const districtFacilities = healthFacilities.filter(
@@ -820,6 +897,7 @@ function deathDeclarationWorkflow(
         compositionId
       )
 
+<<<<<<< HEAD
       if (keepDeclarationIncomplete) {
         declaration.deceased = { ...declaration.deceased, gender: sex }
       }
@@ -832,6 +910,15 @@ function deathDeclarationWorkflow(
           rejectionComment
         )
         await fetchRegistration(randomRegistrar, compositionId)
+=======
+      if(keepDeclarationIncomplete){
+        declaration.deceased = {...declaration.deceased , gender : sex}
+      }
+
+      if(Math.random() < probabilityToBeRejected){
+        await markEventAsRejected(randomRegistrar,compositionId,rejectionReason,rejectionComment)
+        await fetchRegistration(randomRegistrar,compositionId)
+>>>>>>> parent of af316082... Not assigning all health system tab to KW
       }
 
       if (!declaredRecently || Math.random() > 0.5) {
