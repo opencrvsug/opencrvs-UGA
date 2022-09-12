@@ -657,19 +657,21 @@ function birthDeclarationWorkflow(
           submissionTime,
           randomFacility
         )
-        const declaration = await fetchRegistration(randomRegistrar, id)
-        try {
-          registrationDetails = await createBirthRegistrationDetailsForNotification(
-            add(new Date(submissionTime), {
-              days: 1
-            }),
-            location,
-            declaration
-          )
-        } catch (error) {
-          console.log(error)
-          console.log(JSON.stringify(declaration))
-          throw error
+        if (REGISTER) {
+          const declaration = await fetchRegistration(randomRegistrar, id)
+          try {
+            registrationDetails = await createBirthRegistrationDetailsForNotification(
+              add(new Date(submissionTime), {
+                days: 1
+              }),
+              location,
+              declaration
+            )
+          } catch (error) {
+            console.log(error)
+            console.log(JSON.stringify(declaration))
+            throw error
+          }
         }
       } else {
         const keepDeclarationIncomplete =
@@ -682,24 +684,26 @@ function birthDeclarationWorkflow(
           location,
           randomFacility
         )
-        const declaration = await fetchRegistration(randomRegistrar, id)
-        if (keepDeclarationIncomplete) {
-          declaration.child = { ...declaration.child, gender: sex }
-        }
+        if (REGISTER) {
+          const declaration = await fetchRegistration(randomRegistrar, id)
+          if (keepDeclarationIncomplete) {
+            declaration.child = { ...declaration.child, gender: sex }
+          }
 
-        try {
-          registrationDetails = await createRegistrationDetails(
-            add(new Date(submissionTime), {
-              days: 1
-            }),
-            declaration
-          )
-        } catch (error) {
-          console.log(error)
-          console.log(JSON.stringify(declaration))
-          throw error
+          try {
+            registrationDetails = await createRegistrationDetails(
+              add(new Date(submissionTime), {
+                days: 1
+              }),
+              declaration
+            )
+          } catch (error) {
+            console.log(error)
+            console.log(JSON.stringify(declaration))
+            throw error
+          }
+          log('Registering', id)
         }
-        log('Registering', id)
       }
 
       if (!REGISTER) {
@@ -717,7 +721,14 @@ function birthDeclarationWorkflow(
         await fetchRegistration(randomRegistrar, id)
       }
 
-      if (!declaredRecently || Math.random() > 0.5) {
+      if (CERTIFY && (!declaredRecently || Math.random() > 0.5)) {
+        const declaration = await fetchRegistration(randomRegistrar, id)
+        registrationDetails = await createRegistrationDetails(
+          add(new Date(submissionTime), {
+            days: 1
+          }),
+          declaration
+        )
         await markAsRegistered(randomRegistrar, id, registrationDetails)
         const registration = await fetchRegistration(randomRegistrar, id)
 
