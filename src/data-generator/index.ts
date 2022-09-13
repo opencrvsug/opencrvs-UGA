@@ -721,7 +721,7 @@ function birthDeclarationWorkflow(
         await fetchRegistration(randomRegistrar, id)
       }
 
-      if (CERTIFY && (!declaredRecently || Math.random() > 0.5)) {
+      if (!declaredRecently || Math.random() > 0.5) {
         const declaration = await fetchRegistration(randomRegistrar, id)
         registrationDetails = await createRegistrationDetails(
           add(new Date(submissionTime), {
@@ -854,13 +854,14 @@ function deathDeclarationWorkflow(
             declaration
           )
         )
-        const registration = await fetchDeathRegistration(
-          randomRegistrar,
-          compositionId
-        )
-        log('Certifying', registration.id)
-        await wait(2000)
         if (CERTIFY && (!declaredRecently || Math.random() > 0.5)) {
+          const registration = await fetchDeathRegistration(
+            randomRegistrar,
+            compositionId
+          )
+          log('Certifying', registration.id)
+          await wait(2000)
+
           await markDeathAsCertified(
             registration.id,
             randomRegistrar,
